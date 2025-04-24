@@ -1,0 +1,80 @@
+import os
+import json
+import xml.etree.ElementTree as ET
+import streamlit as st
+import pandas as pd
+import faiss
+import numpy as np
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.vectorstores import FAISS
+from langchain.llms import OpenAI
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain
+from langchain.docstore.document import Document
+
+# --- 1. Set OpenAI API Key ---
+os.environ["OPENAI_API_KEY"] = "<your-openai-api-key>"
+
+# --- 2. Streamlit UI ---
+st.title("🔍 XML Matcher (LangChain + FAISS)")
+st.markdown("Upload a CSV with a column `xml` and enter a query to match.")
+
+uploaded_file = st.file_uploader("Upload XML CSV", type="csv")
+user_query = st.text_input("Enter your natural language query:", "Find XMLs where cps is between 0.2 and 0.3")
+
+if uploaded_file and user_query and st.button("Search"):
+    with st.spinner("Processing and matching..."):
+
+        # --- 3. Read CSV and extract XML ---
+        df = pd.read_csv(uploaded_file)
+        xml_strings = df['xml'].tolist()
+
+        # --- 4. Flatten XML into searchable text ---
+        def parse_xml_to_flat_dict(xml_str):
+            root = ET.fromstring(xml_str)
+            flat_dict = {}
+            for field in root.findall(".//field"):
+                name = field.find("name").text
+                value = field.find("value").text if field.find("value") is not None else ""
+                operator = field.find("operator").text if field.find("operator") is not None else ""
+                key = name if operator == '' else f"{name}_{operator}"
+                flat_dict[key] = value
+            return flat_dict
+
+        flat_texts = [json.dumps(parse_xml_to_flat_dict(xml)) for xml in xml_strings]
+        documents = [Document(page_content=txt, metadata={"xml": xml}) for txt, xml in zip(flat_texts, xml_strings)]
+
+        # --- 5. Embed using FAISS + OpenAI embeddings ---
+        embeddings = OpenAIEmbeddings()
+        db = FAISS.from_documents(documents, embeddings)
+
+        # --- 6. Prompt LLM to structure query ---
+        llm = OpenAI(temperature=0)
+        prompt = PromptTemplate(
+            input_variables=["query"],
+            template="""
+You are a smart XML parser assistant. Convert this user query into structured key-value terms in JSON.
+
+Query: {query}
+
+Output JSON only:
+"""
+        )
+        chain = LLMChain(llm=llm, prompt=prompt)
+        structured = chain.run(query=user_query)
+
+        try:
+            structured_json = json.loads(structured)
+        except:
+            structured_json = {}
+
+        query_text = json.dumps(structured_json)
+        results = db.similarity_search(query_text, k=5)
+
+        # --- 7. Show results ---
+        st.subheader("🔎 Matched Results")
+        if results:
+            for res in results:
+                st.json(json.loads(res.metadata["xml"]))
+        else:
+            st.warning("No matching results found.")
