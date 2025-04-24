@@ -12,8 +12,7 @@ def interpret_prompt_node(state):
     }
 
 def search_faiss_node(state):
-    structured_dict = state["structured"]
-    query_text = json.dumps(structured_dict)
+    query_text = json.dumps(state["structured"])
     query_embedding = get_embedding(query_text)
     D, I = index.search(np.array([query_embedding]).astype('float32'), k=5)
     matches = [flat_texts[i] for i in I[0]]
@@ -24,6 +23,4 @@ def search_faiss_node(state):
     }
 
 def return_results_node(state):
-    return {
-        "final_results": state["results"]
-    }
+    return {"final_results": state["results"]}
