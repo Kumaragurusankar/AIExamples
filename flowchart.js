@@ -1,3 +1,4 @@
+```mermaid
 A[Start] --> B[embedding_generator.py]
     B --> B1[Load XMLs from csv]
     B1 --> B2[Parse XMLs into flat dictionaries]
