@@ -1,4 +1,3 @@
-<details> <summary>Click to expand the Mermaid code</summary>
 ```mermaid
 flowchart TD
     A([Start]) --> B[embedding_generator.py]
@@ -26,3 +25,4 @@ flowchart TD
     E4 --> E5[Search FAISS for Top Matches]
     E5 --> E6[Display Results in App UI]
 </details>
+```
