@@ -12,13 +12,11 @@ flowchart TD
 
     B5 --> C{New XMLs Available?}
     C -- Yes --> D[embedding_updater.py]
-    C -- No --> E
 
     D --> D1[Monitor Folder for New XMLs]
     D1 --> D2[Parse and Embed New XMLs]
     D2 --> D3[Add New Vectors to FAISS Index]
     D3 --> D4[Update flat_texts.pkl]
-    D4 --> E
 
     %% Search Flow
     E --> E1[Load faiss.index and flat_texts.pkl]
