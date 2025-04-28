@@ -1,5 +1,5 @@
 <details> <summary>Click to expand the Mermaid code</summary>
-mermaid
+```mermaid
 flowchart TD
     A([Start]) --> B[embedding_generator.py]
     B --> B1[Load XMLs from CSV]
