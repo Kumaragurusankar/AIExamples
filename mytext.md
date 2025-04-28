@@ -20,7 +20,7 @@ flowchart TD
 
     E --> E1[Load faiss.index and flat_texts.pkl]
     E1 --> E2[Accept User Query Input]
-    E2 --> E3[Generate Structured Query (LLM Chain)]
+    E2 --> E3[Generate Structured Query]
     E3 --> E4[Embed the Query]
     E4 --> E5[Search FAISS for Top Matches]
     E5 --> E6[Display Results in App UI]
