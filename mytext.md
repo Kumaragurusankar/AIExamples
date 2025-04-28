@@ -9,7 +9,7 @@ flowchart TD
 
     B5 --> C{New XMLs Available?}
 
-    C -- Yes --> D[embedding_updater.py (Optional Future)]
+    C -- Yes --> D[embedding_updater.py]
     D --> D1[Monitor Folder for New XMLs]
     D1 --> D2[Parse and Embed New XMLs]
     D2 --> D3[Add New Vectors to FAISS Index]
