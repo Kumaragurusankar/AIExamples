@@ -1,0 +1,121 @@
+import os
+import json
+import xml.etree.ElementTree as ET
+import streamlit as st
+import pandas as pd
+import faiss
+import numpy as np
+from langchain.llms import AzureOpenAI
+from langchain.prompts import PromptTemplate
+from langchain.embeddings import AzureOpenAIEmbeddings
+from langchain.chains import LLMChain, SequentialChain
+
+# Azure OpenAI Configuration
+os.environ["AZURE_OPENAI_API_KEY"] = "<your-azure-api-key>"
+os.environ["AZURE_OPENAI_ENDPOINT"] = "<your-endpoint-url>"
+os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"] = "<your-deployment-name>"
+
+# --- Helper Functions ---
+
+def parse_xml_to_flat_dict(xml_str):
+    root = ET.fromstring(xml_str)
+    flat_dict = {}
+    for field in root.findall(".//field"):
+        name = field.find("name").text
+        value = field.find("value").text if field.find("value") is not None else ""
+        operator = field.find("operator").text if field.find("operator") is not None else ""
+        key = name if operator == '' else f"{name}_{operator}"
+        flat_dict[key] = value
+    return flat_dict
+
+@st.cache_resource
+def generate_embeddings(xml_list):
+    flat_texts = [json.dumps(parse_xml_to_flat_dict(xml)) for xml in xml_list]
+    embeddings = embedding_model.embed_documents(flat_texts)
+    dimension = len(embeddings[0])
+    index = faiss.IndexFlatL2(dimension)
+    index.add(np.array(embeddings).astype('float32'))
+    return flat_texts, index
+
+# --- Load Embedding Model ---
+
+embedding_model = AzureOpenAIEmbeddings(
+    deployment=os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"],
+    openai_api_key=os.environ["AZURE_OPENAI_API_KEY"],
+    openai_api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
+    openai_api_version="2023-05-15"
+)
+
+# --- Build LLM and Prompt ---
+
+llm = AzureOpenAI(
+    deployment_name=os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"],
+    openai_api_key=os.environ["AZURE_OPENAI_API_KEY"],
+    openai_api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
+    openai_api_version="2023-05-15"
+)
+
+prompt_template = PromptTemplate(
+    input_variables=["query"],
+    template="""
+You are a smart data parser. Convert the following user request into structured search terms:
+
+Query: {query}
+
+Return a JSON object ONLY.
+"""
+)
+
+# First Chain: Interpret User Query
+interpret_chain = LLMChain(
+    llm=llm,
+    prompt=prompt_template,
+    output_key="structured_query"
+)
+
+# --- Streamlit Interface ---
+
+st.title("🔍 XML ConditionSet Matcher with LangChain + FAISS + Azure OpenAI")
+st.markdown("""
+Upload a CSV file containing XML strings under a column named `xml`.
+The app will match your natural language query to the closest condition sets.
+""")
+
+uploaded_file = st.file_uploader("Upload your CSV", type=["csv"])
+
+if uploaded_file:
+    df = pd.read_csv(uploaded_file)
+    xml_strings = df['xml'].tolist()
+    flat_texts, index = generate_embeddings(xml_strings)
+
+    user_query = st.text_input("Enter your search prompt:", 
+        "Find XMLs where product type is DM or DS, currency is USD, and cps between 0.2 and 0.3")
+
+    if st.button("Search"):
+        with st.spinner("Running..."):
+            # Step 1: Interpret the Query
+            output = interpret_chain.run(query=user_query)
+            
+            try:
+                structured_dict = json.loads(output)
+            except json.JSONDecodeError:
+                st.error("Failed to parse model output as JSON. Try rephrasing your query.")
+                st.stop()
+
+            # Step 2: Embed the structured query
+            query_text = json.dumps(structured_dict)
+            query_embedding = embedding_model.embed_query(query_text)
+
+            # Step 3: Search FAISS
+            D, I = index.search(np.array([query_embedding]).astype('float32'), k=5)
+            matches = [flat_texts[i] for i in I[0]]
+
+            # Step 4: Show Results
+            st.subheader("🔎 Matched Results")
+            if matches:
+                for m in matches:
+                    st.json(json.loads(m))
+            else:
+                st.warning("No matching results found.")
+else:
+    st.info("Please upload a CSV to start.")
