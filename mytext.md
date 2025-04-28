@@ -14,7 +14,7 @@ flowchart TD
     D1 --> D2[Parse and Embed New XMLs]
     D2 --> D3[Add New Vectors to FAISS Index]
     D3 --> D4[Update flat_texts.pkl]
-    D4 --> E[app.py (Streamlit App)]
+    D4 --> E[app.py]
 
     C -- No --> E
 
