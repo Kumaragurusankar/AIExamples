@@ -24,5 +24,4 @@ flowchart TD
     E3 --> E4[Embed the Query]
     E4 --> E5[Search FAISS for Top Matches]
     E5 --> E6[Display Results in App UI]
-</details>
 ```
