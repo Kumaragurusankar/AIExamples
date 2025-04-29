@@ -72,3 +72,20 @@ initial_state: AppState = {
     "results": [],
     "final_results": []
 }
+
+------------------------------------------------
+def filter_results_node(state):
+    query = state["query"]
+    candidates = state["results"]
+    response = refine_chain.run({
+        "query": query,
+        "candidates": json.dumps(candidates, indent=2)
+    })
+    return {"final_output": response}
+
+
+graph.add_node("FilterResults", filter_results_node)
+graph.add_edge("ReturnResults", "FilterResults")
+graph.set_finish_point("FilterResults")
+
+result["final_output"]
