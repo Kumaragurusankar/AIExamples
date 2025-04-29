@@ -104,3 +104,18 @@ Based on the query, which of these is most relevant?
 Respond with the best matching JSON or a ranked list.
 """
 )
+
+-----------------------------
+
+
+result = runnable_graph.invoke({"query": user_query, "structured": {}, "results": [], "final_output": ""})
+
+        st.subheader("🔎 Final LLM-Filtered Output")
+        if "final_output" in result:
+            try:
+                final_json = json.loads(result["final_output"])
+                st.json(final_json)
+            except json.JSONDecodeError:
+                st.markdown(result["final_output"])
+        else:
+            st.warning("No final output returned by the LLM.")
