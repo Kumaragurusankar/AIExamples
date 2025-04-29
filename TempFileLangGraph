@@ -1,8 +1,15 @@
 class AppState(State):
     query: str
-    structured: dict = {}
-    results: list = []
-    final_results: list = []
+    structured: dict
+    results: list
+    final_results: list
+
+initial_state = AppState(
+    query=user_query,
+    structured={},
+    results=[],
+    final_results=[]
+)
 
 # 6. LangGraph Nodes with safe state updates
 def interpret_prompt_node(state: AppState) -> AppState:
