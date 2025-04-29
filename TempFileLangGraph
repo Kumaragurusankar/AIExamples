@@ -89,3 +89,18 @@ graph.add_edge("ReturnResults", "FilterResults")
 graph.set_finish_point("FilterResults")
 
 result["final_output"]
+
+------------------------
+
+refine_prompt = PromptTemplate(
+    input_variables=["query", "candidates"],
+    template="""
+You are a reasoning assistant. A user asked: "{query}".
+
+Here are 5 candidate XML records (in JSON):
+{candidates}
+
+Based on the query, which of these is most relevant?
+Respond with the best matching JSON or a ranked list.
+"""
+)
