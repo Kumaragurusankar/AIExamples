@@ -4,3 +4,9 @@ def embed_xml(data: XMLData):
     embedding = get_embedding(json.dumps(parsed))
     vector_store.add([embedding], [parsed])
     return {"message": "Embedding added successfully"}
+
+
+@app.post("/search")
+def search_xml(query: Query):
+    result = pipeline.invoke({"query": query.prompt, "structured": {}, "results": [], "final_output": ""})
+    return {"result": result.get("final_output", "No match found")}
