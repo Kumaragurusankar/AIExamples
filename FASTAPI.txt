@@ -1,0 +1,6 @@
+@app.post("/embed")
+def embed_xml(data: XMLData):
+    parsed = xml_to_structured_json(data.xml)
+    embedding = get_embedding(json.dumps(parsed))
+    vector_store.add([embedding], [parsed])
+    return {"message": "Embedding added successfully"}
