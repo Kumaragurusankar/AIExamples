@@ -1,0 +1,15 @@
+{
+  "condition": "AND",
+  "rules": [
+    {
+      "field": "prdType",
+      "operator": "in",
+      "value": ["DM", "DS"]
+    },
+    {
+      "field": "current",
+      "operator": "equal",
+      "value": "USD"
+    }
+  ]
+}
