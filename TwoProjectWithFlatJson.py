@@ -195,3 +195,59 @@ def build_pipeline(vector_store, get_embedding_fn):
     graph.add_edge("Search", "Refine")
     graph.set_finish_point("Refine")
     return graph.compile(AppState)
+
+## models.py
+
+from pydantic import BaseModel
+from typing import Any, Dict, List, Union
+
+class XMLData(BaseModel):
+    xml: str
+
+class Query(BaseModel):
+    prompt: str
+
+class StructuredRule(BaseModel):
+    field: str
+    operator: str
+    value: Union[str, float, List[str]]
+
+class StructuredQuery(BaseModel):
+    condition: str
+    rules: List[StructuredRule]
+
+class SearchResult(BaseModel):
+    score: float
+    metadata: Dict[str, Any]
+
+from langchain.prompts import PromptTemplate
+
+# This prompt interprets the user query into a structured search format
+interpret_prompt = PromptTemplate.from_template("""
+You are an expert at converting user queries into structured search criteria.
+Given the following query:
+"{query}"
+Return a structured JSON object with:
+- condition: "AND" or "OR"
+- rules: a list of {{"field": ..., "operator": ..., "value": ...}}
+
+Example output:
+{{
+  "condition": "AND",
+  "rules": [
+    {{"field": "age", "operator": "greater_than_or_equal", "value": 30}},
+    {{"field": "country", "operator": "equal", "value": "USA"}}
+  ]
+}}
+""")
+
+# This prompt refines the top search results into a final natural language answer
+refine_prompt = PromptTemplate.from_template("""
+Given the original query:
+"{query}"
+
+And the following candidate results:
+{candidates}
+
+Please write a clear and concise natural language answer summarizing the most relevant result(s).
+""")
