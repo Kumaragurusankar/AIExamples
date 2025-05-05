@@ -1,0 +1,79 @@
+# faiss_vector_service/main.py
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from typing import List, Dict, Any
+import faiss
+import numpy as np
+import threading
+import uvicorn
+
+app = FastAPI()
+lock = threading.Lock()
+
+# Initialize FAISS index (in-memory)
+dimension = 1536
+index = faiss.IndexFlatL2(dimension)
+metadata_store: Dict[int, Dict[str, Any]] = {}
+current_id = 0
+
+# NOTE: This service uses only in-memory storage (Python dict) for metadata and can save/load the FAISS index as a local file (faiss.index).
+# It does NOT use a database like Elasticsearch.
+# For production systems, Elasticsearch is an excellent choice when you need:
+# ✅ Persistent storage with durability
+# ✅ Distributed, scalable search across large datasets
+# ✅ Advanced querying, filtering, and analytics
+# But for pure vector search, many companies combine FAISS (or other ANN indexes) with a database or use specialized vector databases like Pinecone, Weaviate, or Milvus.
+
+# ---------------- Models ----------------
+class AddVectorsRequest(BaseModel):
+    embeddings: List[List[float]]
+    metadata: List[Dict[str, Any]]
+
+class SearchRequest(BaseModel):
+    embedding: List[float]
+    top_k: int = 5
+
+# ---------------- Endpoints ----------------
+@app.post("/add_vectors")
+def add_vectors(request: AddVectorsRequest):
+    global current_id
+    with lock:
+        vectors = np.array(request.embeddings).astype('float32')
+        index.add(vectors)
+        for meta in request.metadata:
+            metadata_store[current_id] = meta
+            current_id += 1
+    return {"message": f"Added {len(request.embeddings)} vectors."}
+
+@app.post("/search_vectors")
+def search_vectors(request: SearchRequest):
+    with lock:
+        vector = np.array([request.embedding]).astype('float32')
+        if index.ntotal == 0:
+            raise HTTPException(status_code=404, detail="No vectors in index.")
+        D, I = index.search(vector, request.top_k)
+        results = []
+        for idx in I[0]:
+            if idx in metadata_store:
+                results.append(metadata_store[idx])
+        return {"results": results}
+
+@app.get("/health")
+def health():
+    return {"status": "ok", "index_size": index.ntotal}
+
+@app.post("/save_index")
+def save_index():
+    with lock:
+        faiss.write_index(index, "faiss.index")
+    return {"message": "Index saved to faiss.index"}
+
+@app.post("/load_index")
+def load_index():
+    global index
+    with lock:
+        index = faiss.read_index("faiss.index")
+    return {"message": "Index loaded from faiss.index"}
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
