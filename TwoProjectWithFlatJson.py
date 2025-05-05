@@ -362,5 +362,122 @@ class FaissVectorStore:
             else:
                 print(f"No FAISS index file found at {self.index_path}")
 
+-------------------------
+
+Code for 10000 records
+
+    import faiss
+import numpy as np
+from typing import List, Dict, Any
+
+# FAISS Vector Store Class (with file-based persistence)
+class FaissVectorStore:
+    def __init__(self, dimension: int, index_file: str = "faiss.index"):
+        self.dimension = dimension
+        self.index_file = index_file
+
+        # Check if index file exists; if not, create a new index
+        try:
+            self.index = faiss.read_index(self.index_file)  # Load existing index from file
+        except:
+            self.index = faiss.IndexFlatL2(self.dimension)  # Create a new in-memory index if file doesn't exist
+        self.metadata_store: Dict[int, Dict[str, Any]] = {}
+        self.current_id = 0
+
+    def add(self, vectors: List[List[float]], metadata: List[Dict[str, Any]]):
+        """
+        Adds vectors to the FAISS index and metadata to in-memory store.
+        """
+        vectors = np.array(vectors).astype('float32')  # Ensure vectors are float32
+        self.index.add(vectors)  # Add vectors to FAISS index
+        # Add metadata to in-memory store
+        for meta in metadata:
+            self.metadata_store[self.current_id] = meta
+            self.current_id += 1
+
+    def search(self, query_vector: List[float], top_k: int = 5) -> List[Dict[str, Any]]:
+        """
+        Searches the FAISS index for nearest neighbors.
+        """
+        query_vector = np.array([query_vector]).astype('float32')  # Convert query to numpy array
+        D, I = self.index.search(query_vector, top_k)  # Perform search
+        results = []
+        # Return metadata of the top-k nearest neighbors
+        for idx in I[0]:
+            if idx in self.metadata_store:
+                results.append(self.metadata_store[idx])
+        return results
+
+    def save_index(self):
+        """Save FAISS index to a file."""
+        faiss.write_index(self.index, self.index_file)
+        print(f"Index saved to {self.index_file}")
+
+    def load_index(self):
+        """Load FAISS index from a file."""
+        self.index = faiss.read_index(self.index_file)
+        print(f"Index loaded from {self.index_file}")
+
+------------------------
+
+search appi.py
+
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from vector_store import FaissVectorStore  # Importing FAISS vector store
+import numpy as np
+import threading
+import uvicorn
+
+app = FastAPI()
+lock = threading.Lock()
+
+# Initialize FAISS Vector Store with file-based index (support for 10,000+ records)
+dimension = 1536  # Example dimension for embeddings
+vector_store = FaissVectorStore(dimension, index_file="faiss.index")
+
+# ---------------- Models ----------------
+class AddVectorsRequest(BaseModel):
+    embeddings: List[List[float]]
+    metadata: List[Dict[str, Any]]
+
+class SearchRequest(BaseModel):
+    embedding: List[float]
+    top_k: int = 5
+
+# ---------------- Endpoints ----------------
+@app.post("/add_vectors")
+def add_vectors(request: AddVectorsRequest):
+    with lock:
+        vector_store.add(request.embeddings, request.metadata)
+    vector_store.save_index()  # Save the index after adding vectors
+    return {"message": f"Added {len(request.embeddings)} vectors."}
+
+@app.post("/search_vectors")
+def search_vectors(request: SearchRequest):
+    with lock:
+        results = vector_store.search(request.embedding, request.top_k)
+        if not results:
+            raise HTTPException(status_code=404, detail="No results found.")
+        return {"results": results}
+
+@app.get("/health")
+def health():
+    return {"status": "ok", "index_size": len(vector_store.metadata_store)}
+
+@app.post("/save_index")
+def save_index():
+    vector_store.save_index()
+    return {"message": "Index saved to faiss.index"}
+
+@app.post("/load_index")
+def load_index():
+    vector_store.load_index()
+    return {"message": "Index loaded from faiss.index"}
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+
 
 
