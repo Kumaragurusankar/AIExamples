@@ -251,3 +251,116 @@ And the following candidate results:
 
 Please write a clear and concise natural language answer summarizing the most relevant result(s).
 """)
+----------------------------
+
+# xml_search_app/main.py
+
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from pipeline import build_pipeline
+from vector_store import FaissVectorStore
+from embeddings import get_embedding
+
+app = FastAPI()
+vector_store = FaissVectorStore(dimension=1536, index_path="shared_faiss_index.idx")
+
+# Optional: Reload index on startup to ensure it's synced
+vector_store.reload_index()
+
+pipeline = build_pipeline(vector_store, get_embedding)
+
+class Query(BaseModel):
+    prompt: str
+
+@app.post("/search")
+def search_xml(query: Query):
+    try:
+        # Optional: reload index before every search to catch new embeddings
+        vector_store.reload_index()
+        result = pipeline.invoke({"query": query.prompt, "structured": {}, "results": [], "final_output": ""})
+        return {"result": result.get("final_output", "No match found")}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+-------------------------------
+
+# xml_embedder_app/main.py
+
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from xml_utils import xml_to_structured_json
+from embeddings import get_embedding
+from vector_store import FaissVectorStore
+import json
+
+app = FastAPI()
+vector_store = FaissVectorStore(dimension=1536, index_path="shared_faiss_index.idx")
+
+class XMLData(BaseModel):
+    xml: str
+
+@app.post("/embed")
+def embed_xml(data: XMLData):
+    try:
+        parsed = xml_to_structured_json(data.xml)
+        embedding = get_embedding(json.dumps(parsed))
+        vector_store.add([embedding], [parsed])
+        return {"message": "Embedding added and saved successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+-------------------
+
+
+# vector_store.py
+
+import faiss
+import numpy as np
+import threading
+import os
+
+class FaissVectorStore:
+    def __init__(self, dimension: int, index_path: str = "faiss_index.idx"):
+        self.dimension = dimension
+        self.index_path = index_path
+        self.lock = threading.Lock()
+
+        if os.path.exists(self.index_path):
+            print(f"Loading existing FAISS index from {self.index_path}")
+            self.index = faiss.read_index(self.index_path)
+        else:
+            print("Creating new FAISS index")
+            self.index = faiss.IndexFlatL2(dimension)
+
+        # Metadata store (in-memory) — this should eventually go to a DB!
+        self.data = []
+
+    def save_index(self):
+        with self.lock:
+            faiss.write_index(self.index, self.index_path)
+            print(f"FAISS index saved to {self.index_path}")
+
+    def add(self, vectors, metadata):
+        with self.lock:
+            self.index.add(np.array(vectors).astype("float32"))
+            self.data.extend(metadata)
+            self.save_index()
+
+    def search(self, vector, k=5):
+        with self.lock:
+            if self.index.ntotal == 0:
+                return []
+
+            D, I = self.index.search(np.array([vector]).astype("float32"), k)
+            return [self.data[i] for i in I[0] if i < len(self.data)]
+
+    def reload_index(self):
+        with self.lock:
+            if os.path.exists(self.index_path):
+                self.index = faiss.read_index(self.index_path)
+                print(f"FAISS index reloaded from {self.index_path}")
+            else:
+                print(f"No FAISS index file found at {self.index_path}")
+
+
+
