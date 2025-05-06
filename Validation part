@@ -1,0 +1,15 @@
+def is_relevant_prompt(prompt, openai_client):
+    system_prompt = "You are a strict filter that only allows prompts about rate rules, conditions, and discounts. Anything else is rejected."
+    response = openai_client.chat.completions.create(
+        model="gpt-35",
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": f"Is this prompt relevant? '{prompt}' Answer YES or NO."}
+        ]
+    )
+    return "YES" in response.choices[0].message.content.upper()
+
+allowed_keywords = ["rate", "discount", "threshold", "eligibility", "condition", "offer"]
+
+def is_valid_prompt(prompt):
+    return any(keyword in prompt.lower() for keyword in allowed_keywords)
