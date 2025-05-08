@@ -1,0 +1,48 @@
+import vertexai
+from vertexai.language_models import ChatModel, InputOutputTextPair
+
+def vertex_chat_with_examples(project_id: str, location: str, model_name: str, user_prompt: str):
+    # Initialize Vertex AI
+    vertexai.init(project=project_id, location=location)
+
+    # Load the Chat Model
+    chat_model = ChatModel.from_pretrained(model_name)
+
+    # Define few-shot examples
+    examples = [
+        InputOutputTextPair(
+            input_text="Is the sky blue?",
+            output_text="Yes"
+        ),
+        InputOutputTextPair(
+            input_text="Can humans breathe underwater without equipment?",
+            output_text="No"
+        ),
+        InputOutputTextPair(
+            input_text="Is water wet?",
+            output_text="Yes"
+        )
+    ]
+
+    # Start the chat session (no arguments now)
+    chat = chat_model.start_chat()
+
+    # Send the message with context and examples
+    response = chat.send_message(
+        user_prompt,
+        context="You are a strict assistant that only answers 'Yes' or 'No'.",
+        examples=examples,
+        temperature=0.0  # Low temperature = deterministic answers
+    )
+
+    print("User prompt:", user_prompt)
+    print("AI answer:", response.text)
+
+if __name__ == "__main__":
+    PROJECT_ID = "your-gcp-project-id"
+    LOCATION = "us-central1"  # Your region
+    MODEL_NAME = "chat-bison@002"  # Or latest
+
+    user_prompt = "Is fire cold?"
+
+    vertex_chat_with
