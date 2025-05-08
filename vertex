@@ -46,3 +46,24 @@ if __name__ == "__main__":
     user_prompt = "Is fire cold?"
 
     vertex_chat_with
+
+
+
+
+instruction = "You are a strict assistant that only answers 'Yes' or 'No'."
+
+    examples = """
+Q: Is the sky blue?
+A: Yes
+
+Q: Can humans breathe underwater without equipment?
+A: No
+
+Q: Is water wet?
+A: Yes
+"""
+
+    final_prompt = f"{instruction}\n\n{examples}\n\nQ: {user_prompt}\nA:"
+
+    response = chat.send_message(final_prompt, temperature=0.0)
+
