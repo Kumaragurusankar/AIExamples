@@ -67,3 +67,8 @@ A: Yes
 
     response = chat.send_message(final_prompt, temperature=0.0)
 
+----------------------
+
+clean_text = re.sub(r"^```json\s*|\s*```$", "", response.text.strip())
+
+
