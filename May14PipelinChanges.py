@@ -50,3 +50,6 @@ def build_pipeline(vector_store, get_embedding_fn):
     graph.add_edge("Search", "Refine")
     graph.set_finish_point("Refine")
     return graph.compile(AppState)
+
+    simplified_results = [res["metadata"] for res in state["results"]]
+
