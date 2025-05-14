@@ -109,10 +109,20 @@ class FaissVectorStore:
         self.metadata_path = metadata_path
         self.lock = Lock()
 
+        # Use IndexIVFFlat for scalable search
         if os.path.exists(self.index_path):
             self.index = faiss.read_index(self.index_path)
         else:
-            self.index = faiss.IndexIDMap(faiss.IndexFlatL2(self.dimension))
+            # Initialize the IndexIVFFlat
+            nlist = 100  # Number of clusters
+            quantizer = faiss.IndexFlatL2(self.dimension)  # Use a flat index for training
+            self.index = faiss.IndexIVFFlat(quantizer, self.dimension, nlist)
+
+            # Ensure the index is trained before adding vectors
+            print("Training the FAISS index...")
+            training_data = np.random.random((1000, self.dimension)).astype('float32')  # Example training data
+            self.index.train(training_data)
+            print("Index training complete.")
 
         self.metadata_store: Dict[int, Dict[str, Any]] = {}
         self.current_id = 0
