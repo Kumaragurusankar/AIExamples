@@ -1,0 +1,100 @@
+2. Authentication to Remote OpenShift (Prod)
+You have two main choices:
+
+✅ Option A: Use a Service Account Token
+Create a Service Account in the prod cluster.
+
+Grant it edit access to the specific namespace.
+
+Extract its token and API server endpoint.
+
+Store them as Spring Boot config properties or mount via Kubernetes secrets.
+
+yaml
+k8s:
+  prod:
+    api-server: https://api.prod.openshift.company.com:6443
+    token: <service-account-token>
+    namespace: my-app
+✅ Option B: Use a kubeconfig File (if CLI access is available)
+Store it securely in a mounted file or secret.
+
+Use Fabric8’s config loader to read it.
+
+💻 3. Sample Java Code to Connect to Remote Cluster and Restart Deployment
+java
+import io.fabric8.kubernetes.client.Config;
+import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.api.model.apps.Deployment;
+import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
+
+import java.time.Instant;
+
+public class RemotePodRestarter {
+
+    public void restartDeployment(String apiServer, String token, String namespace, String deploymentName) {
+        Config config = new ConfigBuilder()
+            .withMasterUrl(apiServer)
+            .withOauthToken(token)
+            .withTrustCerts(true) // or load CA if needed
+            .build();
+
+        try (KubernetesClient client = new DefaultKubernetesClient(config)) {
+            Deployment updated = client.apps().deployments()
+                .inNamespace(namespace)
+                .withName(deploymentName)
+                .edit(d -> new DeploymentBuilder(d)
+                    .editSpec()
+                        .editTemplate()
+                            .editMetadata()
+                                .addToAnnotations("restartedAt", Instant.now().toString())
+                            .endMetadata()
+                        .endTemplate()
+                    .endSpec()
+                    .build());
+
+            client.apps().deployments()
+                .inNamespace(namespace)
+                .withName(deploymentName)
+                .replace(updated);
+
+            System.out.println("Rolling restart triggered on remote cluster.");
+        }
+    }
+}
+📦 4. Spring Boot Setup (With Externalized Config)
+In application.yml:
+
+yaml
+remote:
+  openshift:
+    url: https://api.prod.openshift.company.com:6443
+    token: ${OPENSHIFT_PROD_TOKEN}
+    namespace: my-prod-namespace
+Use Spring's @Value or @ConfigurationProperties to inject.
+
+🚀 Bonus: Expose an Internal API in COB Cluster (Optional)
+You can expose an endpoint like:
+
+java
+@RestController
+public class OpsController {
+    @PostMapping("/bounce")
+    public ResponseEntity<String> bounce(@RequestParam String deployment) {
+        restarter.restartDeployment(remoteUrl, token, namespace, deployment);
+        return ResponseEntity.ok("Restart triggered.");
+    }
+}
+Secure this with mutual TLS, token auth, or OpenShift OAuth proxy.
+
+🔒 Best Practices for Production
+✅ Use a least-privilege service account (access to specific namespace only).
+
+✅ Secure API requests using mutual TLS or JWT.
+
+✅ Avoid deleting pods directly—always use rolling updates via annotations.
+
+✅ Monitor restart via logs and metrics.
+
+Would you like a working Spring Boot project template for this setup with config, REST, and token management?
