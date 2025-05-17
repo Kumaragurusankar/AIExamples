@@ -1,1 +1,10 @@
-
+fastapi==0.115.2
+uvicorn[standard]==0.34.2
+faiss-cpu==1.8.0
+better-profanity==0.7.0
+openai==1.6.0
+oracledb==3.0.8
+xmltodict==0.14.2
+langchain==0.3.22
+langchain-google-vertexai==2.0.23
+google-cloud-aiplatform==1.92.0
