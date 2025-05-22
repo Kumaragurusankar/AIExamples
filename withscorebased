@@ -1,0 +1,50 @@
+def search(
+    self,
+    vector,
+    k: int = 50,
+    score_threshold: float = None,
+    metadata_filter: Dict[str, Any] = None
+) -> List[Dict[str, Any]]:
+    """
+    Search the FAISS index and return relevant metadata matches.
+
+    :param vector: Query vector (shape: [dimension])
+    :param k: Number of top matches to retrieve
+    :param score_threshold: Optional L2 distance cutoff (e.g., 0.5)
+    :param metadata_filter: Optional dict to filter metadata (e.g., {"deal_id": "123"})
+    :return: List of matched metadata dictionaries with score
+    """
+    with self.lock:
+        if self.index.ntotal == 0:
+            return []
+
+        self.index.nprobe = 10  # or tune as needed
+        D, I = self.index.search(np.array([vector], dtype="float32"), k)
+
+        results = []
+        for dist, idx in zip(D[0], I[0]):
+            if idx == -1 or str(idx) not in self.metadata_store:
+                continue
+
+            meta = self.metadata_store[str(idx)]
+
+            # Optional: score threshold filtering
+            if score_threshold is not None and dist > score_threshold:
+                continue
+
+            # Optional: metadata filtering
+            if metadata_filter:
+                skip = False
+                for key, value in metadata_filter.items():
+                    if str(meta.get(key)) != str(value):
+                        skip = True
+                        break
+                if skip:
+                    continue
+
+            results.append({
+                "score": float(dist),
+                "metadata": meta
+            })
+
+        return results
