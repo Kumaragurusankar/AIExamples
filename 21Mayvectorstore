@@ -56,3 +56,31 @@ class FaissVectorStore:
                 return []
             D, I = self.index.search(np.array([vector]).astype('float32'), k)
             return [self.metadata_store[str(i)] for i in I[0] if str(i) in self.metadata_store]
+
+
+
+Training FAISS index with real embeddings..
+
+
+def train(self, vectors):
+    with self.lock:
+        vecs = np.array(vectors).astype('float32')
+
+        # Validate training input
+        if vecs.ndim != 2 or vecs.shape[1] != self.dimension:
+            raise ValueError(f"Training data must be shape (n, {self.dimension}), got {vecs.shape}")
+
+        if vecs.shape[0] < self.index.nlist:
+            raise ValueError(
+                f"FAISS requires at least as many training vectors as nlist ({self.index.nlist}), "
+                f"but got only {vecs.shape[0]}"
+            )
+
+        print("Training FAISS index with real embeddings...")
+        self.index.train(vecs)
+
+        if not self.index.is_trained:
+            raise RuntimeError("FAISS training failed: index is still untrained after calling train()")
+
+        print("Training complete.")
+        self.save()
