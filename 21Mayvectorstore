@@ -1,1 +1,79 @@
 
+import faiss
+import numpy as np
+import os
+import json
+from threading import Lock
+from typing import List, Dict, Any
+
+class FaissVectorStore:
+    def __init__(self, dimension: int, index_path: str = "faiss.index", metadata_path: str = "metadata.json"):
+        self.dimension = dimension
+        self.index_path = os.path.abspath(index_path)
+        self.metadata_path = os.path.abspath(metadata_path)
+        self.lock = Lock()
+        self.metadata_store: Dict[int, Dict[str, Any]] = {}
+        self.current_id = 0
+
+        if os.path.exists(self.index_path):
+            self.index = faiss.read_index(self.index_path)
+        else:
+            quantizer = faiss.IndexFlatL2(self.dimension)
+            nlist = 100
+            self.index = faiss.IndexIVFFlat(quantizer, self.dimension, nlist)
+
+        self._load_metadata()
+
+    def _load_metadata(self):
+        if os.path.exists(self.metadata_path):
+            with open(self.metadata_path, "r") as f:
+                self.metadata_store = {int(k): v for k, v in json.load(f).items()}
+                self.current_id = max(self.metadata_store.keys(), default=-1) + 1
+
+    def _save_metadata(self):
+        with open(self.metadata_path, "w") as f:
+            json.dump(self.metadata_store, f)
+
+    def _save_index(self):
+        faiss.write_index(self.index, self.index_path)
+
+    def train(self, training_vectors: List[List[float]]):
+        with self.lock:
+            np_vectors = np.array(training_vectors, dtype='float32')
+            if not self.index.is_trained:
+                print("Training FAISS index with real Vertex AI vectors...")
+                self.index.train(np_vectors)
+                print("Training complete.")
+
+    def add(self, vectors: List[List[float]], metadata: List[Dict[str, Any]]):
+        with self.lock:
+            np_vectors = np.array(vectors, dtype="float32")
+            if not self.index.is_trained:
+                raise RuntimeError("FAISS index must be trained before adding vectors.")
+            ids = list(range(self.current_id, self.current_id + len(vectors)))
+            self.index.add_with_ids(np_vectors, np.array(ids))
+            for i, meta in zip(ids, metadata):
+                self.metadata_store[i] = meta
+            self.current_id += len(vectors)
+            self._save_index()
+            self._save_metadata()
+
+    def search(self, vector: List[float], k: int = 5) -> List[Dict[str, Any]]:
+        with self.lock:
+            if self.index.ntotal == 0:
+                return []
+            D, I = self.index.search(np.array([vector], dtype="float32"), k)
+            results = []
+            for dist, idx in zip(D[0], I[0]):
+                if idx in self.metadata_store:
+                    results.append({
+                        "score": float(dist),
+                        "metadata": self.metadata_store[idx]
+                    })
+            return results
+
+    def reload_index(self):
+        with self.lock:
+            if os.path.exists(self.index_path):
+                self.index = faiss.read_index(self.index_path)
+            self._load_metadata()
