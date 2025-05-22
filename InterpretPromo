@@ -1,0 +1,28 @@
+interpret_prompt = PromptTemplate.from_template("""
+You are an expert at converting user queries into structured search criteria.
+
+Given the following query:
+"{query}"
+
+Return a structured JSON object with:
+- condition: "AND" or "OR"
+- rules: a list of objects with:
+  - field: the name of the field
+  - operator: one of ["equal", "not_equal", "greater_than", "greater_than_or_equal", "less_than", "less_than_or_equal", "contains", "in"]
+  - value: the target value or list of values
+
+Interpret natural language carefully. For example:
+- "prod type in DSA" → operator should be "in" with a list or "contains" for a single string.
+- "age greater than 30" → "greater_than"
+- "country equals USA" → "equal"
+- "status is not active" → "not_equal"
+
+Example output:
+{
+  "condition": "AND",
+  "rules": [
+    {"field": "age", "operator": "greater_than_or_equal", "value": 30},
+    {"field": "country", "operator": "equal", "value": "USA"}
+  ]
+}
+""")
