@@ -1,0 +1,7 @@
+def train(self, training_vectors: List[List[float]]):
+        with self.lock:
+            np_vectors = np.array(training_vectors, dtype='float32')
+            if not self.index.is_trained:
+                print("Training FAISS index with real Vertex AI vectors...")
+                self.index.train(np_vectors)
+                print("Training complete.")
