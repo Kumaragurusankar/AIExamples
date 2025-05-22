@@ -84,3 +84,28 @@ def train(self, vectors):
 
         print("Training complete.")
         self.save()
+
+def train(self, vectors):
+    with self.lock:
+        vecs = np.array(vectors).astype('float32')
+
+        # Ensure it's 2D: (n_samples, dimension)
+        if vecs.ndim == 1:
+            vecs = vecs.reshape(1, -1)
+
+        if vecs.shape[1] != self.dimension:
+            raise ValueError(f"Expected dimension {self.dimension}, got {vecs.shape[1]}")
+
+        if vecs.shape[0] < self.index.nlist:
+            raise ValueError(
+                f"Need at least {self.index.nlist} training vectors, got {vecs.shape[0]}"
+            )
+
+        print("Training FAISS index with real embeddings...")
+        self.index.train(vecs)
+
+        if not self.index.is_trained:
+            raise RuntimeError("FAISS training failed: index is still untrained after calling train()")
+
+        print("Training complete.")
+        self.save()
