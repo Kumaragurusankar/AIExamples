@@ -1,0 +1,8 @@
+Layer	Technology	Role
+Frontend / API	FastAPI (2 apps)	Accepts queries, triggers search
+LangGraph Agent	Vertex AI (Gemini / PaLM)	Converts natural language to structured JSON
+Embedding Service	xml_embedder_app + FAISS	Embeds structured XML, stores in IndexIVFFlat
+Vector Search	FAISS + k=1000	Retrieves semantically relevant documents
+Filtering Logic	Custom Python rules	Applies structured JSON filters
+Storage	Oracle Autonomous DB (optional)	Stores original XML metadata
+Deployment	OpenShift / Docker / CI-CD (Harness/uDeploy)	Production-ready, scalable microservices
