@@ -6,3 +6,12 @@ Vector Search	FAISS + k=1000	Retrieves semantically relevant documents
 Filtering Logic	Custom Python rules	Applies structured JSON filters
 Storage	Oracle Autonomous DB (optional)	Stores original XML metadata
 Deployment	OpenShift / Docker / CI-CD (Harness/uDeploy)	Production-ready, scalable microservices
+
+
+Frontend / API: FastAPI (2 apps) for user queries and XML embedding
+LangGraph Agent: Google Vertex AI (Gemini / PaLM) for LLM parsing
+Embedding Service: xml_embedder_app + FAISS (IndexIVFFlat)
+Vector Search: FAISS with top k=1000 results
+Filtering Logic: Custom Python filters based on structured JSON
+Storage: Oracle Autonomous DB for XML metadata (optional)
+Deployment: OpenShift, Docker, CI-CD with Harness/uDeploy
