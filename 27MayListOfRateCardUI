@@ -1,0 +1,30 @@
+# app.py
+
+import streamlit as st
+import requests
+import pandas as pd
+
+st.title("🔍 Rate Card Lookup via API")
+
+# Simulated LLM output
+rate_ids = ["123", "321", "453"]
+st.write("Rate IDs:", rate_ids)
+
+# Backend URL
+API_URL = "http://localhost:8000/rate-cards"
+params = {"rate_ids": rate_ids}
+
+# Call FastAPI
+response = requests.get(API_URL, params=params)
+
+# Parse and display
+if response.status_code == 200:
+    data = response.json().get("data", [])
+    if data:
+        df = pd.DataFrame(data)
+        st.dataframe(df, use_container_width=True)
+        st.download_button("Download CSV", df.to_csv(index=False), "rate_cards.csv")
+    else:
+        st.warning("No rate cards found.")
+else:
+    st.error("Failed to fetch from backend.")
