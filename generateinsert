@@ -1,0 +1,29 @@
+import pandas as pd
+
+# Load the CSV
+df = pd.read_csv("rate_cards.csv")
+
+# Target table name
+table_name = "rate_cards"
+
+# Function to escape SQL values
+def escape(val):
+    if pd.isnull(val):
+        return "NULL"
+    if isinstance(val, str):
+        return f"'{val.replace('\'', '\'\'')}'"
+    return str(val)
+
+# Generate INSERT statements
+insert_statements = []
+for _, row in df.iterrows():
+    columns = ", ".join(df.columns)
+    values = ", ".join(escape(v) for v in row)
+    sql = f"INSERT INTO {table_name} ({columns}) VALUES ({values});"
+    insert_statements.append(sql)
+
+# Save to .sql file or print
+with open("insert_rate_cards.sql", "w") as f:
+    f.write("\n".join(insert_statements))
+
+print("✅ INSERT queries written to insert_rate_cards.sql")
