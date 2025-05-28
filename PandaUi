@@ -3,15 +3,22 @@ sanitized_rows = [
     for row in rows
 ]
 
-t.markdown(
+st.markdown(
     """
     <style>
-    /* Target Streamlit's dataframe container */
-    .stDataFrame > div > div > div > div {
+    /* Entire DataFrame container */
+    .stDataFrame > div {
+        background-color: black !important;
+        color: white !important;
+        border-radius: 5px;
+        padding: 10px;
+    }
+    /* Scrollable viewport containing the table */
+    .stDataFrame > div > div {
         background-color: black !important;
         color: white !important;
     }
-    /* Table cell styles */
+    /* Table element */
     .stDataFrame table {
         background-color: black !important;
         color: white !important;
@@ -21,10 +28,14 @@ t.markdown(
         background-color: #222 !important;
         color: white !important;
     }
-    /* Table rows */
+    /* Table body rows */
     .stDataFrame tbody tr {
         background-color: black !important;
         color: white !important;
+    }
+    /* Scrollbar thumb */
+    .stDataFrame::-webkit-scrollbar-thumb {
+        background-color: #444 !important;
     }
     </style>
     """,
