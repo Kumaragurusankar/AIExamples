@@ -2,3 +2,31 @@ sanitized_rows = [
     ["" if value is None else value for value in row]
     for row in rows
 ]
+
+t.markdown(
+    """
+    <style>
+    /* Target Streamlit's dataframe container */
+    .stDataFrame > div > div > div > div {
+        background-color: black !important;
+        color: white !important;
+    }
+    /* Table cell styles */
+    .stDataFrame table {
+        background-color: black !important;
+        color: white !important;
+    }
+    /* Table header */
+    .stDataFrame thead th {
+        background-color: #222 !important;
+        color: white !important;
+    }
+    /* Table rows */
+    .stDataFrame tbody tr {
+        background-color: black !important;
+        color: white !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
