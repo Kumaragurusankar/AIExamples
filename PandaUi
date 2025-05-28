@@ -1,0 +1,4 @@
+sanitized_rows = [
+    ["" if value is None else value for value in row]
+    for row in rows
+]
