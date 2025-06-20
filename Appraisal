@@ -1,3 +1,27 @@
 I consistently prioritized code quality by conducting detailed code reviews across multiple projects, ensuring adherence to our coding standards, best practices, and architectural guidelines. I proactively identified and fixed technical debt during peer reviews and encouraged clean, maintainable code through constructive feedback.
 
 Additionally, I contributed to increasing unit test coverage to meet and maintain the 80% threshold. This was achieved by writing comprehensive test cases using JUnit and Mockito for both new and legacy modules. I also set up code coverage dashboards to ensure transparency and continuous tracking during sprints. These efforts contributed to improved code stability, faster defect identification, and a smoother CI/CD pipeline.
+
+
+. Plan and Migrate Services to Tron Framework
+I took a lead role in planning and migrating existing services to the Tron framework. This involved analyzing service dependencies, identifying gaps in the Tron platform for our use cases, and ensuring backward compatibility during the migration process.
+
+I collaborated with cross-functional teams to align the migration roadmap with business priorities and ensured minimal disruption to upstream/downstream systems. All migrated services were validated through automated tests and integrated into the CI/CD pipeline. The transition improved standardization, scalability, and reduced maintenance overhead.
+
+✅ 2. Successfully Complete Solace Migration for A Feeds
+I successfully managed the migration of A Feeds from legacy messaging infrastructure to Solace. This required a deep understanding of both existing systems and Solace’s capabilities.
+
+I ensured a smooth cutover by conducting rigorous testing (unit, integration, and performance), working closely with infrastructure and QA teams. I also implemented monitoring and alerting post-migration to ensure stability. The migration improved message reliability, observability, and reduced latency, aligning with enterprise integration standards.
+
+✅ 3. Project Planning, Scheduling and Implementation for the Year
+I was actively involved in yearly project planning, including identifying short-term deliverables and aligning them with long-term strategic goals.
+
+I worked with stakeholders to define scope, timelines, resource planning, and risk mitigation strategies. Leveraging tools like JIRA and Confluence, I managed execution status, tracked milestones, and ensured on-time delivery of key initiatives. My ability to prioritize critical workstreams and sequence initiatives effectively contributed to consistent delivery with minimal spillovers.
+
+✅ 4. Learn and Own CSA Connect Space to Address Functional/Technical Changes
+I proactively ramped up on the CSA Connect Space to become the go-to person for both technical and functional aspects. I deep-dived into service behavior, data flows, and integration points, allowing me to effectively handle change requests, incident resolutions, and business enhancements.
+
+I collaborated with SMEs, QA, and BA teams to implement scalable and compliant solutions, ensuring auditability and data accuracy. My ownership in this space contributed to reduced response time for issues and faster turnaround on functional changes.
+
+🧩 Optional Summary Line:
+Across all these initiatives, I demonstrated a balance of technical depth, ownership, and strategic alignment, contributing to both tactical delivery and long-term architecture goals.
