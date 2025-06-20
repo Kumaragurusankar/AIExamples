@@ -1,0 +1,3 @@
+I consistently prioritized code quality by conducting detailed code reviews across multiple projects, ensuring adherence to our coding standards, best practices, and architectural guidelines. I proactively identified and fixed technical debt during peer reviews and encouraged clean, maintainable code through constructive feedback.
+
+Additionally, I contributed to increasing unit test coverage to meet and maintain the 80% threshold. This was achieved by writing comprehensive test cases using JUnit and Mockito for both new and legacy modules. I also set up code coverage dashboards to ensure transparency and continuous tracking during sprints. These efforts contributed to improved code stability, faster defect identification, and a smoother CI/CD pipeline.
