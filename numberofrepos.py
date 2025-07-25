@@ -1,12 +1,12 @@
 import requests
 from requests.auth import HTTPBasicAuth
 
-# Replace with your credentials
+# 🔐 Replace with your credentials and workspace ID
 USERNAME = "your_bitbucket_username"
-APP_PASSWORD = "your_app_password"  # App password, not your regular password
+APP_PASSWORD = "your_app_password"  # App password, not your normal login password
 WORKSPACE = "your_workspace_id"
 
-# Base URL
+# Base URL for Bitbucket API
 BASE_URL = f"https://api.bitbucket.org/2.0/repositories/{WORKSPACE}"
 
 def get_all_repos():
@@ -15,35 +15,34 @@ def get_all_repos():
     while url:
         response = requests.get(url, auth=HTTPBasicAuth(USERNAME, APP_PASSWORD))
         data = response.json()
-        for repo in data.get("values", []):
-            repos.append(repo["slug"])
-        url = data.get("next")  # Pagination
+        repos.extend([repo["slug"] for repo in data.get("values", [])])
+        url = data.get("next")
     return repos
 
-def get_branches_for_repo(repo_slug):
-    branches = []
+def count_branches(repo_slug):
+    count = 0
     url = f"{BASE_URL}/{repo_slug}/refs/branches?pagelen=100"
     while url:
         response = requests.get(url, auth=HTTPBasicAuth(USERNAME, APP_PASSWORD))
         data = response.json()
-        for branch in data.get("values", []):
-            branches.append(branch["name"])
-        url = data.get("next")  # Pagination
-    return branches
+        count += len(data.get("values", []))
+        url = data.get("next")
+    return count
 
 def main():
     total_branches = 0
-    print("Fetching repositories and branches...")
     repos = get_all_repos()
-    for repo in repos:
-        branches = get_branches_for_repo(repo)
-        print(f"Repository: {repo} - Branches: {len(branches)}")
-        total_branches += len(branches)
 
-    print("\n===================================")
-    print(f"Total Repositories: {len(repos)}")
-    print(f"Total Branches across all repositories: {total_branches}")
-    print("===================================")
+    print(f"\nFound {len(repos)} repositories. Counting branches...\n")
+
+    for repo in repos:
+        branch_count = count_branches(repo)
+        print(f"Repository: {repo} → Branches: {branch_count}")
+        total_branches += branch_count
+
+    print("\n============================")
+    print(f"Total Branches: {total_branches}")
+    print("============================")
 
 if __name__ == "__main__":
     main()
