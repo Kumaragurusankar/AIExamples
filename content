@@ -1,0 +1,12 @@
+Hi Team,
+
+I was reviewing the current load process where the file is first loaded into a staging table and then moved to the main table, and I wanted to share an observation.
+
+At the moment, it appears that the staging data is not referenced or used beyond the initial load into the main table. Given that, I am trying to understand the specific purpose this staging step is serving today. From my perspective, it seems to add an extra step in the flow without a clearly visible functional or operational benefit.
+
+If the staging layer is intended for validation, audit, reconciliation, or recovery, it might be helpful to document that usage more clearly. Otherwise, there may be an opportunity to simplify the overall process by reassessing whether this intermediate step is still required.
+
+I wanted to raise this as a point for discussion and alignment, and I am open to any context I may be missing.
+
+Thanks,
+Kumara Guru Sankar Jawahar
