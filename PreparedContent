@@ -1,0 +1,17 @@
+Team,
+
+Going forward, any infrastructure or server change **must include an upfront and clearly communicated plan** covering:
+
+* UAT testing timeline
+* UAT issues, if any, and their impact
+* Explicit **production cutover confirmation**
+* Confirmation from all impacted downstream teams
+
+In this case, UAT issues and multiple schedule deviations were communicated late, which resulted in misalignment and production impact. This could have been avoided with early and clear communication of the UAT plan and cutover intent.
+
+Please ensure this information is shared **early and before any production change** so that all teams can align and plan accordingly.
+
+This will be treated as a mandatory expectation going forward.
+
+Thanks,
+Kumara guru sankar Jawahar
