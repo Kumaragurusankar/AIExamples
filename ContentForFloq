@@ -1,0 +1,30 @@
+Middle Office Event-Driven Architecture Proposal
+1. Current State
+• Upstream clients send executions via Solace.
+• Sequential pipeline: Trade Validator -> Trade Creator.
+• Tight coupling between components.
+• Limited replay capability.
+• Scaling requires scaling entire pipeline.
+2. Proposed Event-Driven Architecture (Using AMPS)
+• Bridge service normalizes multiple FIX/protocol formats into a canonical execution event.
+• Canonical events are published to AMPS (execution.raw).
+• Trade Validator consumes execution.raw and publishes execution.validated.
+• Trade Creator consumes execution.validated and publishes trade.created.
+• Trade Enricher consumes trade.created and publishes trade.final.
+• Each service is stateless, idempotent, and horizontally scalable.
+• Replay supported via AMPS durable subscriptions and transaction log.
+3. Key Design Principles
+• Stateless services: no in-memory workflow dependency.
+• Idempotent processing: same execution does not create duplicate trades.
+• Single responsibility per service.
+• Event-stage architecture instead of method chaining.
+• Replayability without upstream involvement.
+4. Technology Comparison: Chronicle Queue vs vs AMPS
+• Chronicle Queue: Single-node, file-based, ultra-low latency local queue.
+• Chronicle Queue: No native distributed clustering or broker-level HA.
+• Chronicle Queue: Requires custom replication and scaling design.
+• AMPS: Distributed event broker designed for capital markets.
+• AMPS: Supports durable subscriptions, replay, filtering, clustering.
+• AMPS: Enables horizontal scaling and multi-stage event pipelines.
+• Conclusion: Chronicle fits low-latency local systems; AMPS fits distributed middle-office event
+backbone.
