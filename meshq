@@ -1,0 +1,9 @@
+Please explain the complete deployment architecture of this project in simple terms. I need to understand and present this. Tell me:
+
+What is Ambrosia Mesh and what does it do in this project specifically? How does leader election work — which file configures it and what are the key settings?
+Walk me through every file in helm/templates/ — what does each file create in OpenShift and why?
+What is in values.yaml? What are the most important settings a developer would change?
+What does service-traffic.yaml do — how does traffic actually reach the application?
+What does services.yaml lines 34–40 configure for Ambrosia Mesh?
+If this pod crashes or restarts, what exactly happens step by step — who detects it, who takes over, how long does it take?
+How does a developer deploy a new version of this service? What is the exact sequence of events from code merge to running in OpenShift?
