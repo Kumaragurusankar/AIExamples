@@ -1,0 +1,8 @@
+Can you explain the mesh and traffic routing setup you implemented for this project? Specifically tell me:
+
+What framework or tool is used for the service mesh (Istio? Linkerd? something else?)
+How is canary deployment configured — what files control it?
+What percentage of traffic goes to canary by default?
+Show me the key config files you generated (VirtualService, DestinationRule, or equivalent)
+How would a developer promote or rollback a canary release in this project?"
+
