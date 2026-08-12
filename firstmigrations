@@ -1,0 +1,54 @@
+TASK: Reverse-Engineer Legacy TIBCO BW Project and Generate Audit Markdown
+
+CONTEXT:
+We are preparing to migrate a legacy TIBCO BusinessWorks application to Spring Boot. Before writing any code, I need a comprehensive architectural audit of the existing TIBCO project. TIBCO BW projects are essentially directories of XML files (.process, .xsd, .wsdl, .sharedhttp, etc.). 
+
+INPUTS:
+- Target Repository Path: [INSERT_PATH_TO_TIBCO_REPO_HERE]
+- Target Main Process: [INSERT_NAME_OF_MAIN_PROCESS_FILE_HERE.process]
+- Output File: `tibco_audit_report.md`
+
+INSTRUCTIONS:
+You are to act as a system parser. Traverse the target TIBCO directory and analyze the XML structure of the target main process and any sub-processes it calls (`<pd:activity name="Call Process">`). 
+
+Extract the following information and format it strictly into the provided Markdown template below.
+
+Extraction Rules:
+1. Ingestion/Triggers: Look for starting activities like `JMS Queue Receiver`, `HTTP Receiver`, or `Timer`. Extract the queue names, topics, or endpoints. Check Global Variables (`defaultVars`) if the queue name is parameterized (e.g., `%%Queues/InputQueue%%`).
+2. Egress/Destinations: Look for activities like `JMS Queue Sender` or `HTTP Response`. Extract the target destinations.
+3. Dependencies (Database): Look for `JDBC Query`, `JDBC Update`, or `SQL Direct` activities. Extract the exact SQL statements and the names of the tables being queried/mutated.
+4. Dependencies (External): Look for `Send HTTP Request` or `SOAP Request Reply` activities. Extract the endpoints.
+5. Data Contracts: Look for `<wsdl:message>` or `<xsd:element>` references in the input/output bindings of the main process. List the exact file paths of these XSD/WSDL files.
+
+CONSTRAINTS:
+- DO NOT write any Java or Spring Boot code. This is strictly an analysis and documentation task.
+- DO NOT hallucinate. If a value is hidden behind a Global Variable that you cannot resolve, write "UNRESOLVED_VAR: [VarName]".
+- Limit your analysis to the execution path of the specified "Target Main Process". Do not audit unused processes in the repository.
+
+OUTPUT TEMPLATE:
+Create a file named `tibco_audit_report.md` and populate it using this exact structure:
+
+# TIBCO to Spring Boot Migration: Service Audit & Analysis
+
+## 1. Service Overview
+* **TIBCO Project / Main Process:** [Extracted Process Name]
+
+## 2. Ingestion Contract (Triggers & Sources)
+* **Trigger Type:** [e.g., JMS Queue Receiver]
+* **Queue / Topic / Endpoint:** [Extracted Value]
+* **Input Schema File:** [Path to XSD]
+
+## 3. Egress Contract (Destinations & Sinks)
+* **Destination 1 (Type):** [e.g., JMS Queue Sender]
+* **Target:** [Queue/Topic Name]
+* **Output Schema File:** [Path to XSD]
+
+## 4. Dependencies & State Mutations
+* **Database Operations (JDBC):**
+  * **Tables Touched:** [List of tables]
+  * **SQL Executed:** [Extract raw SQL if possible]
+* **External APIs (HTTP/SOAP):**
+  * **Endpoints Called:** [List endpoints]
+
+## 5. File System Dependencies
+* **Files Read/Written:** [Look for 'Read File' or 'Write File' activities and list paths]
