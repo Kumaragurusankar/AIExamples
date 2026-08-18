@@ -1,0 +1,35 @@
+You are an expert Enterprise Infrastructure Architect specializing in 60East AMPS, highly available messaging systems, and Ansible.
+
+My goal is to fully understand how AMPS works for our "Primo" application before we write any configuration code. We are migrating away from a manual, undocumented server deployment (`ot-g-amps`) to a strict, automated Infrastructure as Code deployment (`amps-server` using Ansible). The Primo application relies on AMPS purely for persisting raw messages to a Transaction Log to allow for historical playback (using bookmark subscriptions).
+
+Do NOT write any Ansible playbooks, XML files, or application code yet. 
+
+Your task is to generate 4 comprehensive Markdown (`.md`) files. Explain concepts clearly so a layman can understand the analogies, but include the deep technical specifics required by senior engineers. 
+
+Generate the following 4 files:
+
+### File 1: `docs/01_AMPS_Architecture_and_Setup_Guide.md`
+- Provide a layman's explanation of what AMPS is.
+- Explain the difference between the Transaction Log (Journal) and the State of the World (SOW). Clarify why Primo only needs the Transaction Log.
+- Detail how bookmark replays work.
+- Explain Active-Passive replication topology and why we must use `sync` acknowledgment instead of `async` to prevent data loss.
+
+### File 2: `docs/02_AMPS_Failure_Handling_Runbook.md`
+- Detail the exact system behaviors and recovery steps for the following scenarios:
+  1. Complete Data Center Outage (Both Primary and DR servers go down simultaneously).
+  2. Primary Server Hardware Failure (Motherboard or network card dies).
+  3. Disk / Storage Failure (NVMe drive dies).
+  4. Journal File Corruption (Disk sector corrupts a message; explain AMPS CRC checks and how to recover from the healthy DR node).
+  5. Network Split-Brain (The network link between Primary and DR drops, but both servers are still running).
+
+### File 3: `docs/03_Primo_Application_Integration_Guide.md`
+- Explain the AMPS `HAClient` in layman's terms.
+- Detail why the Primo application MUST use a "File-Backed Publish Store" and a "File-Backed Bookmark Store".
+- Explain exactly how the client handles a broker disconnect and reconnect without duplicating or losing a single message.
+
+### File 4: `docs/04_Deployment_Standards_Ansible_vs_Manual.md`
+- Compare the current `ot-g-amps` (manual SSH/console configuration) approach against the `amps-server` (Ansible) approach.
+- Explain the dangers of "snowflake" servers in a Tier-1 messaging environment.
+- Outline the standard lifecycle of deploying an AMPS cluster using GitOps and Ansible (e.g., version control, reproducibility, scaling).
+
+Output the complete Markdown content for all 4 files. Ensure the tone is authoritative, highly structured, and easy to read.
