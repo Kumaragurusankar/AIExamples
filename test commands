@@ -1,1 +1,5 @@
 echo '{"ordrId":"hi", "status":"test"}' | $AMPSDIR/bin/spark publish -server localhost:9007 -type json -topic ordr
+
+$AMPSDIR/bin/spark sow -server localhost:10009 -type json -topic ordr -filter "/ordrId = 'hi'"
+
+$AMPSDIR/bin/spark sow -server <SECONDARY_SERVER_IP>:10009 -type json -topic ordr -filter "/ordrId = 'hi'"
