@@ -1,0 +1,1 @@
+echo '{"ordrId":"hi", "status":"test"}' | $AMPSDIR/bin/spark publish -server localhost:9007 -type json -topic ordr
