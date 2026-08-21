@@ -1,0 +1,46 @@
+flowchart LR
+    %% Defining Styles
+    classDef amps fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#000;
+    classDef compute fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000;
+    classDef db fill:#fff3cd,stroke:#ffc107,stroke-width:2px,color:#000;
+    classDef ext fill:#eaeaea,stroke:#6c757d,stroke-width:2px,stroke-dasharray: 5 5,color:#000;
+
+    %% Ingestion
+    Q[Upstream / External]:::ext
+    L(Lightweight Listener):::compute
+    
+    %% AMPS Infrastructure
+    subgraph AMPS_Infrastructure [AMPS Message Bus]
+        direction TB
+        RAW[(inbound.raw\nTxLog: Immutable Vault)]:::amps
+        STD[(inbound.standard\nTxLog: Event Stream)]:::amps
+        SOW[(trade.state.current\nSOW: Latest State)]:::amps
+    end
+    
+    %% Processing Core
+    TG(TG Trade Processor):::compute
+    DB[(Trade Database\nUnique ID + Bookmark)]:::db
+    
+    %% Downstreams
+    DPM[Primo-Dist: DPM]:::compute
+    FO[FO-Exec]:::compute
+    UI[UI / Risk Dashboards]:::compute
+
+    %% Ingestion Flow
+    Q -->|1. Pull| L
+    L -->|2. Publish Raw FIX| RAW
+    L -->|3. Parse & Publish Standard FIX| STD
+    
+    %% Processing Flow
+    STD ==>|4. Stream Events| TG
+    TG <==>|5. Atomic DB Commit\n(The ACK)| DB
+    TG -->|6. Publish Enriched JSON| SOW
+    
+    %% Distribution Flow
+    SOW -.->|7. Content Filter| DPM
+    SOW -.->|7. Content Filter| FO
+    UI -.->|8. Real-time Query| SOW
+    
+    %% Outage Recovery (Dotted Red Line for DR)
+    TG -.->|9. Crash Recovery:\nReconnect with DB Bookmark| STD
+    linkStyle 9 stroke:#cc0000,stroke-width:2px,stroke-dasharray: 5 5;
