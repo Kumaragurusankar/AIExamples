@@ -1,0 +1,130 @@
+import streamlit as st
+import time
+import json
+import graphviz
+
+# Page Config
+st.set_page_config(page_title="AMPS Architecture Simulator", layout="wide")
+st.title("Trade Flow Simulator: AMPS Decoupled Architecture")
+
+# --- Initialize Mock Infrastructure in Session State ---
+if "amps_raw_log" not in st.session_state:
+    st.session_state.amps_raw_log = []
+if "amps_standard_log" not in st.session_state:
+    st.session_state.amps_standard_log = []
+if "trade_db" not in st.session_state:
+    st.session_state.trade_db = {"last_bookmark": 0, "trades": {}}
+if "amps_sow" not in st.session_state:
+    st.session_state.amps_sow = {}
+if "tg_status" not in st.session_state:
+    st.session_state.tg_status = "Online"
+if "global_bookmark" not in st.session_state:
+    st.session_state.global_bookmark = 0
+
+# --- Helper Functions (The Logic) ---
+def simulate_inbound_trade(trade_id, status, price):
+    st.session_state.global_bookmark += 1
+    bm = st.session_state.global_bookmark
+    
+    raw_msg = f"8=FIX.4.4|35=D|11={trade_id}|39={status}|44={price}|10=123|"
+    st.session_state.amps_raw_log.append(f"[{bm}] {raw_msg}")
+    
+    std_msg = {"bookmark": bm, "trade_id": trade_id, "status": status, "price": price}
+    st.session_state.amps_standard_log.append(std_msg)
+    
+    if st.session_state.tg_status == "Online":
+        process_event(std_msg)
+
+def process_event(event):
+    st.session_state.trade_db["trades"][event["trade_id"]] = event
+    st.session_state.trade_db["last_bookmark"] = event["bookmark"]
+    st.session_state.amps_sow[event["trade_id"]] = event
+
+def recover_tg():
+    st.session_state.tg_status = "Online"
+    last_bm = st.session_state.trade_db["last_bookmark"]
+    for event in st.session_state.amps_standard_log:
+        if event["bookmark"] > last_bm:
+            process_event(event)
+
+# --- Sidebar Controls ---
+st.sidebar.header("Upstream Simulator")
+if st.sidebar.button("Send NEW Trade (ID: 100)"):
+    simulate_inbound_trade("TRD-100", "NEW", 150.25)
+if st.sidebar.button("Send MODIFY Trade (ID: 100)"):
+    simulate_inbound_trade("TRD-100", "MODIFIED", 155.00)
+
+st.sidebar.divider()
+st.sidebar.header("Disaster Simulator")
+if st.sidebar.button("💥 Crash TG Processor"):
+    st.session_state.tg_status = "Offline"
+if st.sidebar.button("🔧 Reboot & Recover TG"):
+    recover_tg()
+if st.sidebar.button("Clear All Data"):
+    st.session_state.clear()
+
+# --- Dynamic Architecture Diagram ---
+st.subheader("System Architecture & Data Flow")
+
+# Create Graphviz object
+graph = graphviz.Digraph()
+graph.attr(rankdir='LR', size='12,4')
+
+# Define Node Styles
+amps_style = {'style': 'filled', 'fillcolor': '#1E88E5', 'fontcolor': 'white', 'shape': 'cylinder'}
+app_style = {'style': 'filled', 'fillcolor': '#43A047', 'fontcolor': 'white', 'shape': 'box'}
+db_style = {'style': 'filled', 'fillcolor': '#FB8C00', 'fontcolor': 'white', 'shape': 'cylinder'}
+crashed_style = {'style': 'filled', 'fillcolor': '#E53935', 'fontcolor': 'white', 'shape': 'box'}
+
+# Add Nodes
+graph.node('Exchange', 'Upstream\nExchange', shape='plaintext')
+graph.node('Listener', 'Lightweight\nListener', **app_style)
+graph.node('Raw', 'AMPS\ninbound.raw\n(Log)', **amps_style)
+graph.node('Std', 'AMPS\ninbound.standard\n(Log)', **amps_style)
+
+# Dynamic Node for TG Processor
+if st.session_state.tg_status == "Online":
+    graph.node('TG', 'TG Processor\n(Active)', **app_style)
+else:
+    graph.node('TG', 'TG Processor\n(CRASHED)', **crashed_style)
+
+graph.node('DB', 'Relational DB\n(Trade + Bookmark)', **db_style)
+graph.node('SOW', 'AMPS\ntrade.state.current\n(SOW Cache)', **amps_style)
+graph.node('UI', 'Risk UI /\nDashboards', shape='plaintext')
+
+# Add Edges
+graph.edge('Exchange', 'Listener', label='FIX')
+graph.edge('Listener', 'Raw', label='1. Write Raw String')
+graph.edge('Listener', 'Std', label='2. Publish JSON Event')
+graph.edge('Std', 'TG', label='3. Stream Events')
+graph.edge('TG', 'DB', label='4. Atomic Commit')
+graph.edge('TG', 'SOW', label='5. Update State')
+graph.edge('SOW', 'UI', label='6. Real-time Query')
+
+# Render the graph in Streamlit
+st.graphviz_chart(graph)
+st.divider()
+
+# --- Main Dashboard Layout ---
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.subheader("1. AMPS Event Logs")
+    with st.expander("inbound.raw", expanded=True):
+        for msg in reversed(st.session_state.amps_raw_log): st.code(msg, language="text")
+    with st.expander("inbound.standard", expanded=True):
+        for msg in reversed(st.session_state.amps_standard_log): st.json(msg)
+
+with col2:
+    st.subheader("2. TG Processor & DB")
+    if st.session_state.tg_status == "Online":
+        st.success(f"TG Status: Online")
+    else:
+        st.error(f"TG Status: Offline")
+    st.info(f"Last Committed Bookmark: **{st.session_state.trade_db['last_bookmark']}**")
+    st.json(st.session_state.trade_db["trades"])
+
+with col3:
+    st.subheader("3. UI / SOW Cache")
+    for t_id, data in st.session_state.amps_sow.items():
+        st.metric(label=f"Trade: {t_id}", value=f"${data['price']:.2f}", delta=data['status'])
