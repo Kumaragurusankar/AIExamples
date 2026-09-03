@@ -1,0 +1,38 @@
+from solace.messaging.messaging_service import MessagingService
+from solace.messaging.resources.queue import Queue
+from solace.messaging.config.missing_resources_creation_strategy import MissingResourcesCreationStrategy
+from solace.messaging.errors.pubsubplus_client_error import PubSubPlusClientError
+
+# 1. Setup connection
+config = {
+    "solace.messaging.transport.host": "tcp://<YOUR_BROKER_IP>:<PORT>",
+    "solace.messaging.service.vpn-name": "<YOUR_VPN_NAME>",
+    "solace.messaging.authentication.scheme.basic.username": "<YOUR_CLIENT_USERNAME>",
+    "solace.messaging.authentication.scheme.basic.password": "<YOUR_PASSWORD>"
+}
+
+messaging_service = MessagingService.builder().from_properties(config).build()
+messaging_service.connect()
+
+try:
+    # 2. Try to dynamically create a temporary test queue
+    test_queue = Queue.durable_exclusive_queue("permission-test-queue")
+    
+    receiver = messaging_service.create_persistent_message_receiver_builder() \
+        .with_missing_resources_creation_strategy(MissingResourcesCreationStrategy.CREATE_ON_START) \
+        .build(test_queue)
+    
+    receiver.start() # This triggers the creation attempt
+    print("✅ SUCCESS: Your user HAS permission to create queues!")
+    receiver.terminate()
+
+except PubSubPlusClientError as e:
+    # 3. Catch the rejection error
+    error_msg = str(e)
+    if "Permission Denied" in error_msg or "403" in error_msg:
+        print("❌ DENIED: Your user does NOT have 'Allow Guaranteed Endpoint Create' enabled.")
+    else:
+        print(f"⚠️ Connection failed for another reason: {error_msg}")
+
+finally:
+    messaging_service.disconnect()
