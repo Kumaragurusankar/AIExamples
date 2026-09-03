@@ -36,3 +36,7 @@ except PubSubPlusClientError as e:
 
 finally:
     messaging_service.disconnect()
+
+curl -k -X GET "https://<HOSTNAME>:<SEMP_PORT>/SEMP/v2/config/msgVpns/<VPN_NAME>/clientUsernames/<CLIENT_USERNAME>" \
+  -u "<YOUR_CLIENT_USERNAME>:<YOUR_PASSWORD>"
+
