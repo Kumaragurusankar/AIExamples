@@ -1,0 +1,22 @@
+I need to prepare a 30-minute PR review and architectural defense for my AMPS Dev server deployment PR. 
+
+I need you to inspect the PR diff, the Ansible/deployment scripts, the symlink directory structure, and the amps_config.xml file, and produce a concise 3-part presentation package:
+
+1. UNDERSTAND THE SETUP (My Personal Briefing):
+   - Walk me through step-by-step how the deployment actually executed: how the binary was placed, how the symlink structure is laid out (including how rollbacks work with symlinks), file permissions, and how the process is supervised.
+   - Explain the exact configuration parameters I set in amps_config.xml for the 2 sample topics and the replication block.
+
+2. 10-MINUTE PRESENTATION SCRIPT & SLIDE/FLOW OUTLINE:
+   - Provide a clear, structured opening statement that sets the boundary: this PR delivers a functional Dev instance, basic binary layout, replication baseline, and 2 sample topics. It is NOT a production sizing or failover SLA review.
+   - Provide the exact flow to present: 
+     a. Architecture of the Dev VM / directories.
+     b. How the deployment/symlink mechanism operates.
+     c. Live verification: showing the AMPS admin console / port, the active topics, and the replication link status.
+
+3. "DEFLECTION & AUTHORITY" CHEAT SHEET:
+   - Give me tight, accurate, 2-sentence answers plus a scope-pivot line for these exact questions:
+     * How do we calculate AMPS storage and transaction log sizing?
+     * How does reverse replication behave if a primary or secondary node crashes?
+     * How are messages physically written to disk (SOW vs transaction log)?
+     * Can we inspect persisted messages directly on the server filesystem?
+     * Does AMPS append metadata/internal headers to persisted messages?
