@@ -1,0 +1,22 @@
+We are migrating an existing TIBCO BusinessWorks (BW) integration project to a Spring Boot microservice architecture, replacing an unstable caching layer with AMPS (60East Technologies). 
+
+The existing TIBCO service fetches security master/entitlement data from QAS and QPS (and QPS Plus) systems and caches it. The current cache is experiencing frequent sync and data retrieval failures.
+
+Analyze the TIBCO BW workspace files, process definitions (.process), schemas (.xsd/.json), and my preliminary markdown notes. Deliver an actionable migration assessment:
+
+1. CURRENT STATE DECOMPOSITION (TIBCO BW):
+   - Map out the exact retrieval mechanism: How does TIBCO currently call QAS and QPS/QPS Plus (REST, SOAP, JDBC, or JMS)?
+   - Identify the root cause of cache failures: How is the current cache implemented (BW Shared Resource, ActiveSpaces, local memory), and why is it failing to stay in sync with QAS/QPS?
+
+2. TARGET STATE DESIGN (Spring Boot + AMPS):
+   - Define how Spring Boot should interface with QAS/QPS (e.g., resilient HTTP client/WebClient with retries and circuit breakers).
+   - Define the AMPS data model: How should QAS and QPS security records be mapped to AMPS State-of-the-World (SOW) topics? Specify the primary SOW keys, topic naming conventions, and message format (JSON/NVFIX).
+   - Detail how the Spring Boot service will publish updates to AMPS and how consumers will query/subscribe to the SOW cache using the AMPS Java Client (amps-client).
+
+3. STEP 1 EXECUTION & POC SPECIFICATION:
+   - What is the absolute FIRST task required to kick off this migration?
+   - Define the minimum viable Proof of Concept (POC) scope:
+     a. Single Spring Boot ingestion component for one security dataset (e.g., QAS account permissions).
+     b. AMPS SOW topic configuration.
+     c. Verification test: Demonstrate SOW persistence, sub-millisecond query by key, and real-time subscription update.
+   - List the exact risks, dependencies, and prerequisite configs needed before writing code.
