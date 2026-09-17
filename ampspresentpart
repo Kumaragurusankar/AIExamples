@@ -1,0 +1,10 @@
+@workspace Act as my elite Infrastructure Architect. I need to present THIS exact repository tomorrow at 9 AM for a main-branch merge. I have a 30-minute slot and I want a deep-dive script. Do NOT give me generic code or placeholder text. Scan my actual local files in this workspace.
+
+Generate a comprehensive text document structure that I can copy directly into Microsoft Word. Format it using the following sections:
+
+1. FILE-BY-FILE CODE TOUR: Scan my active deployment scripts (like my AMPS binary copy script) and XML config files. For each real file found, output its exact filename, and write a 4-sentence spoken explanation detailing exactly what lines/properties are being set inside that file, and the execution order.
+2. EXPERT ENVIRONMENT SAFETY EXPLANATION: Read the exact block in my script that checks if the AMPS binary is already running and skips the copy. Explain why this specific line ensures deployment stability and avoids process corruption.
+3. REAL TOPOLOGY & REPLICATION SYNC: Read my replication XML files. Explain our actual configured topics, network loops, or cluster nodes in high-level architectural terms.
+4. CHALLENGER SHIELDS: Based on my actual configuration numbers, limits, or parameters, write 3 technical answers to handle any aggressive scaling or latency questions.
+
+Provide the response in pure, clean text format with clear headers so I can easily copy-paste it directly into a Word Document tonight.
