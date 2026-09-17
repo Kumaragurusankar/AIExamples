@@ -1,0 +1,11 @@
+@workspace Act as my elite Enterprise Architect. I need to explain to my team EXACTLY how data flows and is stored in AMPS using our active repository configurations. I also need to show the web monitor console to the team. 
+
+Scan my active repository files (like our amps_config.xml or replication/topic files) and generate a highly technical presentation script covering these exact points for my Word document:
+
+1. HOW DATA IS STORED IN AMPS (Our Exact Config): Based on my active repository properties, explain how AMPS uses the "SOW" (State of the World) database file cache in-memory for lightning-fast queries, and how it writes to the sequential "Transaction Log" (.txlog) on disk for durability. Reference the exact file paths or storage properties configured in my workspace files.
+
+2. THE LIVE WEB ADMIN MONITOR (UI Walkthrough): AMPS runs as a headless server, but it exposes a Web Admin Monitor interface. Look at my configuration file for the "<Admin>" or "<HTTP>" port tag (e.g., port 8085 or similar). Give me a 4-sentence spoken script on how to tell the team to open their browsers to "http://localhost:[PORT]" during the meeting to see the live performance charts, connections, and topic statistics screenshots.
+
+3. DATA FLUSH & REPLICATION MECHANICS: Explain how a message hitting our configured topics is instantly persisted to the local transaction log before being asynchronously flushed/replicated to our cluster backup nodes based on our replication configurations.
+
+Output this in crisp, professional spoken text format with clear headers so I can paste it directly into my Word document right now. Use my real port numbers and file paths from the workspace.
