@@ -1,0 +1,149 @@
+29. Scheduled Incremental Remediation Mode
+Objective
+
+This task runs on a recurring schedule. Each execution must remediate a maximum of ONE dependency.
+
+Do not attempt to complete all dependency upgrades in a single scheduled execution.
+
+The objective is to make measurable, independently reviewable progress across multiple scheduled runs while maintaining all existing security, testing, ACU and audit constraints.
+
+29.1 One Dependency Per Scheduled Run
+
+For each scheduled execution:
+
+Read docs/compliance/remediation-progress.md, if it exists.
+Inspect the current repository branch and existing remediation PRs.
+Run the required baseline checks and vulnerability scan when permitted by the conditions below.
+Check whether the CVE target has already been achieved.
+Select exactly one eligible dependency.
+Attempt its upgrade within the existing limits.
+Open at most one remediation or escalation PR during this run.
+Stop execution immediately after completing or aborting that dependency.
+
+Never start a second dependency upgrade during the same scheduled execution.
+
+29.2 Persistent Progress Tracking
+
+Maintain the following file:
+
+docs/compliance/remediation-progress.md
+
+Record:
+
+Initial CVE count.
+Latest verified CVE count.
+Last scan date.
+Completed dependencies and their versions.
+Skipped dependencies and their reasons.
+Open remediation PRs.
+Merged remediation PRs.
+Dependencies awaiting manual review.
+Remaining eligible upgrade candidates.
+Overall remediation status.
+
+Update this file in the same PR as the corresponding dependency upgrade or escalation audit.
+
+Do not mark an upgrade as merged until the repository confirms that the PR has actually been merged.
+
+Use the repository's actual Git and PR state as the source of truth. Do not rely exclusively on the progress file.
+
+29.3 Previous PR Check
+
+Before starting a new dependency upgrade, inspect outstanding remediation PRs.
+
+If a previous remediation PR is still open, draft, or awaiting review:
+
+Do not start another dependency upgrade.
+Do not create a duplicate PR.
+Record that the scheduled execution is waiting for the previous PR.
+Stop the current execution.
+
+If the previous PR was merged:
+
+Start from the latest merged repository state.
+Recalculate the current CVE count using the existing scanner.
+Continue only if the target has not been achieved.
+
+If a previous PR was closed without merging:
+
+Inspect its recorded outcome.
+Do not automatically repeat the same failed upgrade.
+Follow the recorded escalation or retry decision.
+Retry only when there is a specific, justified change in circumstances.
+29.4 Single-Dependency Transaction
+
+Treat each dependency upgrade as an independent transaction.
+
+The transaction consists of:
+
+Selecting the dependency.
+Recording its current and target versions.
+Applying the upgrade.
+Making permitted compatibility changes.
+Updating required integration tests.
+Running the required validation.
+Scanning for vulnerabilities.
+Updating the progress file.
+Opening one focused PR.
+
+Do not begin the next transaction during the same scheduled run.
+
+If validation fails within the permitted limits, revert the attempted implementation and follow the existing escalation procedure.
+
+29.5 PR and Merge Gate
+
+After a successful upgrade:
+
+Open one focused PR containing the dependency upgrade, necessary code changes, tests and progress update.
+Stop the current scheduled execution.
+Wait for the PR to be merged before attempting another dependency.
+
+After an aborted upgrade:
+
+Open one audit PR containing the dated escalation document and the customized GitHub Copilot prompt.
+Update the progress file.
+Stop the current execution.
+
+Do not assume that opening a PR means the remediation has been applied to the main branch.
+
+29.6 Scheduled Execution Stop Conditions
+
+At the beginning of every scheduled run, check these conditions in order:
+
+If the latest verified CVE count is below five and the result is confirmed against the current repository state, stop.
+If an earlier remediation PR remains unmerged, stop and wait.
+If no eligible dependency upgrades remain, stop and report the remaining vulnerabilities.
+Otherwise, process exactly one dependency.
+
+After completing an upgrade, stop even if other eligible dependencies remain.
+
+Do not bypass these conditions to meet an arbitrary number of upgrades per week.
+
+29.7 Idempotency
+
+Repeated scheduled executions must not:
+
+Create duplicate remediation PRs.
+Reapply an already merged dependency upgrade.
+Reattempt an aborted upgrade without a documented reason.
+Overwrite existing escalation documents.
+Lose the historical remediation record.
+Upgrade additional dependencies after the CVE target is achieved.
+
+If the progress file and actual repository state disagree, reconcile them using verified Git and PR information before proceeding.
+
+29.8 Per-Run Final Report
+
+At the end of each scheduled execution, report:
+
+Scheduled execution date.
+Starting CVE count.
+Dependency selected.
+Dependency upgrade outcome.
+Tests executed and their results.
+Ending CVE count, if a new scan was completed.
+PR URL, if created.
+Whether the run stopped because of the CVE target, an open PR, an aborted upgrade or candidate exhaustion.
+The next action required.
+
+Never claim that a vulnerability has been remediated on the main branch while its upgrade PR is still unmerged.
